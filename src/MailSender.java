@@ -9,31 +9,98 @@ import java.net.Socket;
 
 public class MailSender {
 	
-	private Socket sock;
+	private Socket sock = null;
+	private InetAddress SMTPServer;
+	private InputStream ServerIncoming;
+	private OutputStream ClientOut;
+	private BufferedReader SIReader;
 	
-	MailSender(InetAddress SMTPServer){
+	int WELCOME = 220;
+	int OK = 250;
+	
+	MailSender(InetAddress SMTPServerAddress){
+		SMTPServer = SMTPServerAddress;
+		connect("Test");
+		disconnect();
+	}
+	
+	private boolean connect(String User){
 		try {
-			setSocket(new Socket(SMTPServer, 25));
-			sock = getSocket();		
-			InputStream ServerIncoming = getSocket().getInputStream();
-			OutputStream ServerOut = getSocket().getOutputStream();
-			BufferedReader SIReader = new BufferedReader( new InputStreamReader(ServerIncoming));
-			//TODO
-			// - EHLO / HELO
-			// Send mail
+			sock = new Socket(SMTPServer, 25);
+			ServerIncoming = sock.getInputStream();
+			ClientOut = sock.getOutputStream();
+			SIReader = new BufferedReader(new InputStreamReader(ServerIncoming));
+			String messageIn = SIReader.readLine();
+			System.out.print(messageIn);
+			if(MessageCode(messageIn) == WELCOME){
+				ClientOut.write(("HELO " + User + "\n").getBytes());
+				messageIn = SIReader.readLine();
+				System.out.print(messageIn);
+				if(MessageCode(messageIn) == OK){
+					return true;
+				}
+				else{
+					return false;
+				}
+			}	
+			else{
+				return false;
+			}
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return false;
 		}
 	}
-	public void sendMail(){
-		
+	
+	private void disconnect(){
+		try {
+			sock.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		sock = null;
+		ServerIncoming = null;
+		ClientOut = null;
+		SIReader = null;
 	}
-	private Socket getSocket() {
-		return sock;
+	
+	public boolean sendMail(Email mail){
+		if (connect(mail.SenderName)){
+			try {
+				ClientOut.write(("MAIL FROM: <" + mail.SenderAddress + ">\n").getBytes());
+				if (MessageCode(SIReader.readLine()) == OK){
+					ClientOut.write(("RCPT TO: <" + mail.ReceiverAddress + ">\n").getBytes());
+					if(MessageCode(SIReader.readLine()) == OK){
+						String MessageToSend = prepareMessage(mail.message);
+					}
+					else{
+						return false;
+					}
+				}
+				else{
+					return false;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+		}
+		else{
+			System.out.print("Could not connect to the SMTP Server!");
+			disconnect();
+			return false;
+		}
 	}
-	private void setSocket(Socket sock) {
-		this.sock = sock;
+	
+	private int MessageCode(String message){
+		return Integer.parseInt(message.substring(0,3));
+	}
+	
+	private String prepareMessage(String message){
+		String preparedString = new String();
+		///TODO: Make the message conforming to RFC spec
+		return preparedString;
 	}
 }
