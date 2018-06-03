@@ -9,7 +9,7 @@ import java.net.Socket;
 
 public class MailSender {
 	
-	private Socket sock = null;
+	private Socket sock;
 	private InetAddress SMTPServer;
 	private InputStream ServerIncoming;
 	private OutputStream ClientOut;
@@ -17,11 +17,10 @@ public class MailSender {
 	
 	int WELCOME = 220;
 	int OK = 250;
+	int DATA = 354;
 	
 	MailSender(InetAddress SMTPServerAddress){
 		SMTPServer = SMTPServerAddress;
-		connect("Test");
-		disconnect();
 	}
 	
 	private boolean connect(String User){
@@ -31,11 +30,9 @@ public class MailSender {
 			ClientOut = sock.getOutputStream();
 			SIReader = new BufferedReader(new InputStreamReader(ServerIncoming));
 			String messageIn = SIReader.readLine();
-			System.out.print(messageIn);
 			if(MessageCode(messageIn) == WELCOME){
 				ClientOut.write(("HELO " + User + "\n").getBytes());
 				messageIn = SIReader.readLine();
-				System.out.print(messageIn);
 				if(MessageCode(messageIn) == OK){
 					return true;
 				}
@@ -65,32 +62,55 @@ public class MailSender {
 		SIReader = null;
 	}
 	
-	public boolean sendMail(Email mail){
+	public String sendMail(Email mail){
+		String MessageID = new String();
 		if (connect(mail.SenderName)){
 			try {
 				ClientOut.write(("MAIL FROM: <" + mail.SenderAddress + ">\n").getBytes());
-				if (MessageCode(SIReader.readLine()) == OK){
+				String message = SIReader.readLine();
+				if (MessageCode(message) == OK){
 					ClientOut.write(("RCPT TO: <" + mail.ReceiverAddress + ">\n").getBytes());
-					if(MessageCode(SIReader.readLine()) == OK){
+					message = SIReader.readLine();
+					if(MessageCode(message) == OK){
 						String MessageToSend = prepareMessage(mail.message);
+						ClientOut.write(("DATA\n").getBytes());
+						message = SIReader.readLine();
+						if (MessageCode(message) == DATA){
+							ClientOut.write((mail.getHeader() + "\n").getBytes());
+							ClientOut.write(MessageToSend.getBytes());
+						}
+						else{
+							System.out.print("Problem with data reception!\n");
+							return "Error!";
+						}
+						message = SIReader.readLine();
+						if (MessageCode(message) == OK){
+							MessageID = message.substring(10, message.length());
+						}
+						else{
+							System.out.print("Problem with message!\n");
+							return "Error!";
+						}
 					}
 					else{
-						return false;
+						System.out.print("Problem with receiver address!\n");
+						return "Error!";
 					}
 				}
 				else{
-					return false;
+					System.out.print("Problem with sender address!\n");
+					return "Error!";
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-				return false;
+				return "Error!";
 			}
-			return true;
+			return MessageID;
 		}
 		else{
 			System.out.print("Could not connect to the SMTP Server!");
 			disconnect();
-			return false;
+			return "Error!";
 		}
 	}
 	
@@ -99,8 +119,23 @@ public class MailSender {
 	}
 	
 	private String prepareMessage(String message){
-		String preparedString = new String();
-		///TODO: Make the message conforming to RFC spec
-		return preparedString;
+		String preparedString = "";
+		if (message.length() <= 998){
+			preparedString = message;
+		}
+		else{
+			int rows = (int) Math.ceil(message.length()/998);
+			System.out.print("No of Rows: " + rows);
+			for(int i = 0; i <= rows; i++){
+				try{
+				preparedString += message.substring(i*998, (i+1)*998);
+				}
+				catch (StringIndexOutOfBoundsException e){
+					preparedString += message.substring(i*998, message.length());
+				}
+				preparedString += "\n";
+			}
+		}
+		return preparedString + "\n.\n";
 	}
 }

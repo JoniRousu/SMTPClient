@@ -11,11 +11,11 @@ public class Main {
 	 * @param args
 	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException {	
 		BufferedReader Console = new BufferedReader(new InputStreamReader(System.in));
 		MailSender sender = new MailSender(InetAddress.getByName("debby.vs.uni-due.de"));
 		Email mail = new Email();
-		
+		mail.ReceiverAddress = "spam@debby.vs.uni-due.de";
 		System.out.print("Welcome!\nPlease enter your Name: ");
 		mail.SenderName = Console.readLine();
 		System.out.print("Please enter your Email Adress: ");
@@ -29,10 +29,33 @@ public class Main {
 				System.out.print("Sorry, your Email Adress " + buf + " is not valid!\nPlease enter your email adress: ");
 			}
 		}
-		//TODO: 
-		// - Receiver Name
-		// - Receiver Address -> validate
-		// - Subject
+		System.out.print("Please enter the receiver's name: ");
+		mail.ReceiverName = Console.readLine();
+		System.out.print("Please enter a subject (can be empty): ");
+		mail.Subject = Console.readLine();
+		System.out.print("Please enter the message you would like to send. End with a single dot on a line!\n");
+		String messageToSend = Console.readLine();
+		while (true){
+			if (messageToSend.length() == 1 && messageToSend.charAt(0) == '.'){
+				System.out.print("Thank you!\n");
+				break;
+			}
+			else if (messageToSend.length() == 2 && messageToSend.substring(0,2) == ".."){
+				mail.message += ".\n";
+			}
+			else{
+				mail.message += messageToSend + "\n";
+			}
+			messageToSend = Console.readLine();
+		}
+		System.out.print("Sending mail...\n");
+		String MessageID = sender.sendMail(mail);
+		if (MessageID == "Error!"){
+			System.out.print("An error occured while sending");
+		}
+		else{
+			System.out.print("Message-ID: " + MessageID + "\n");
+		}
 		
 	}
 	
