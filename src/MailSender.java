@@ -37,10 +37,12 @@ public class MailSender {
 					return true;
 				}
 				else{
+					System.out.print(messageIn);
 					return false;
 				}
 			}	
 			else{
+				System.out.print(messageIn);
 				return false;
 			}
 			
@@ -72,15 +74,15 @@ public class MailSender {
 					ClientOut.write(("RCPT TO: <" + mail.ReceiverAddress + ">\n").getBytes());
 					message = SIReader.readLine();
 					if(MessageCode(message) == OK){
-						String MessageToSend = prepareMessage(mail.getMessage());
 						ClientOut.write(("DATA\n").getBytes());
 						message = SIReader.readLine();
 						if (MessageCode(message) == DATA){
 							ClientOut.write((mail.getHeader() + "\n").getBytes());
-							ClientOut.write(MessageToSend.getBytes());
+							ClientOut.write(mail.getMessage().getBytes());
+							ClientOut.write("\n.\n".getBytes());
 						}
 						else{
-							System.out.print("Problem with data reception!\n");
+							System.out.print("Problem with data reception!\n" + message + "\n");
 							return "Error!";
 						}
 						message = SIReader.readLine();
@@ -88,27 +90,28 @@ public class MailSender {
 							MessageID = message.substring(10, message.length());
 						}
 						else{
-							System.out.print("Problem with message!\n");
+							System.out.print("Problem with message!\n" + message + "\n");
 							return "Error!";
 						}
 					}
 					else{
-						System.out.print("Problem with receiver address!\n");
+						System.out.print("Problem with receiver address!\n" + message + "\n");
 						return "Error!";
 					}
 				}
 				else{
-					System.out.print("Problem with sender address!\n");
+					System.out.print("Problem with sender address!\n" + message + "\n");
 					return "Error!";
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
 				return "Error!";
 			}
+			disconnect();
 			return MessageID;
 		}
 		else{
-			System.out.print("Could not connect to the SMTP Server!");
+			System.out.print("Could not connect to the SMTP Server!\n");
 			disconnect();
 			return "Error!";
 		}
@@ -116,25 +119,5 @@ public class MailSender {
 	
 	private int MessageCode(String message){
 		return Integer.parseInt(message.substring(0,3));
-	}
-	
-	private String prepareMessage(String message){
-		String preparedString = "";
-		if (message.length() <= 998){
-			preparedString = message;
-		}
-		else{
-			int rows = (int) Math.ceil(message.length()/998);
-			for(int i = 0; i <= rows; i++){
-				try{
-				preparedString += message.substring(i*998, (i+1)*998);
-				}
-				catch (StringIndexOutOfBoundsException e){
-					preparedString += message.substring(i*998, message.length());
-				}
-				preparedString += "\n";
-			}
-		}
-		return preparedString + "\n.\n";
 	}
 }

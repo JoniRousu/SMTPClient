@@ -2,7 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
 public class Main {
@@ -15,6 +15,13 @@ public class Main {
 		BufferedReader Console = new BufferedReader(new InputStreamReader(System.in));
 		MailSender sender = new MailSender(InetAddress.getByName("debby.vs.uni-due.de"));
 		Email mail = new Email();
+		if (args.length == 1){
+			try {
+				mail.setAttachment(args[0]);
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+		}
 		mail.ReceiverAddress = "spam@debby.vs.uni-due.de";
 		System.out.print("Welcome!\nPlease enter your Name: ");
 		mail.SenderName = Console.readLine();

@@ -1,3 +1,9 @@
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.IOException;
 import java.util.Base64;
 
 
@@ -11,6 +17,8 @@ public class Email {
 	public String Subject;
 	public String header;
 	private String attachment;
+	private String attachmentType;
+	private String attachmentName;
 	private String boundary;
 	
 	Email(){
@@ -23,6 +31,8 @@ public class Email {
 		boundary = "";
 		header = "";
 		attachment = "";
+		attachmentType = "";
+		attachmentName = "";
 	}
 	
 	
@@ -38,10 +48,15 @@ public class Email {
 
 
 	public void setMessage(String Message){
-		message = Base64.getMimeEncoder().encodeToString(Message.getBytes());
-		if (attachment.isEmpty()){
-			message += "\n--" + boundary + "--";
+		message = Base64.getMimeEncoder(72, "\r\n".getBytes()).encodeToString(Message.getBytes());
+		if (!attachment.isEmpty()){
+			message += "\n\n--" + boundary + "\n";
+			message += "Content Type: " + attachmentType + ";\n name =\"" + attachmentName + "\"\n";
+			message += "Content-Transfer-Encoding: base64\n";
+			message += "Content-Disposition: attachment;\n filename=\"" + attachmentName + "\"\n\n";
+			message += attachment + "\n";
 		}
+		message += "--" + boundary + "--";
 	}
 	
 	public String getMessage(){
@@ -54,8 +69,13 @@ public class Email {
 	}
 
 
-	public void setAttachment(String attachment) {
-		this.attachment = attachment;
+	public void setAttachment(String pathToAttachment) throws IOException, URISyntaxException {
+		File Attachment = new File(pathToAttachment);
+		attachmentType = Files.probeContentType(Paths.get(new URI("file:///" + pathToAttachment)));
+		attachmentName = Attachment.getName();
+		if (attachment.isEmpty()){
+			attachment = Base64.getMimeEncoder(72, "\r\n".getBytes()).encodeToString(Files.readAllBytes(Paths.get(new URI("file:///" + pathToAttachment))));
+		}
 	}
 
 	public String getHeader(){
@@ -67,11 +87,10 @@ public class Email {
 		}
 		//MIME
 		Header += "Mime-Version: 1.0\n";
-		Header += "Content-Type: multipart/mixed; boundary=\"" + boundary + "\"\n";
-		Header += "Content-Disposition: inline\n";
+		Header += "Content-Type: multipart/mixed;\n boundary=\"" + boundary + "\"\n";
+		Header += "\nThis is a multi-part message in MIME format.\n";
 		Header += "--" + boundary + "\n";
 		Header += "Content-Type: text/plain; charset=utf-8\n";
-		Header += "Content-Disposition: inline\n";
 		Header += "Content-Transfer-Encoding: base64\n";
 		
 		return Header;
