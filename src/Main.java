@@ -18,15 +18,15 @@ public class Main {
 		mail.ReceiverAddress = "spam@debby.vs.uni-due.de";
 		System.out.print("Welcome!\nPlease enter your Name: ");
 		mail.SenderName = Console.readLine();
-		System.out.print("Please enter your Email Adress: ");
+		System.out.print("Please enter your Email Address: ");
 		while (true){
 			String buf = Console.readLine();
 			if(validateEmail(buf)){
-				mail.SenderAddress = buf;
+				mail.setSenderAddress(buf);
 				break;
 			}
 			else{
-				System.out.print("Sorry, your Email Adress " + buf + " is not valid!\nPlease enter your email adress: ");
+				System.out.print("Sorry, your Email Address " + buf + " is not valid!\nPlease enter your email adress: ");
 			}
 		}
 		System.out.print("Please enter the receiver's name: ");
@@ -35,19 +35,22 @@ public class Main {
 		mail.Subject = Console.readLine();
 		System.out.print("Please enter the message you would like to send. End with a single dot on a line!\n");
 		String messageToSend = Console.readLine();
+		String message = "";
 		while (true){
 			if (messageToSend.length() == 1 && messageToSend.charAt(0) == '.'){
 				System.out.print("Thank you!\n");
 				break;
 			}
 			else if (messageToSend.length() == 2 && messageToSend.substring(0,2) == ".."){
-				mail.message += ".\n";
+				message += ".\n";
 			}
 			else{
-				mail.message += messageToSend + "\n";
+				message += messageToSend + "\n";
 			}
 			messageToSend = Console.readLine();
 		}
+		mail.setMessage(message);
+		mail.getHeader();
 		System.out.print("Sending mail...\n");
 		String MessageID = sender.sendMail(mail);
 		if (MessageID == "Error!"){

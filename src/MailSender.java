@@ -66,13 +66,13 @@ public class MailSender {
 		String MessageID = new String();
 		if (connect(mail.SenderName)){
 			try {
-				ClientOut.write(("MAIL FROM: <" + mail.SenderAddress + ">\n").getBytes());
+				ClientOut.write(("MAIL FROM: <" + mail.getSenderAddress() + ">\n").getBytes());
 				String message = SIReader.readLine();
 				if (MessageCode(message) == OK){
 					ClientOut.write(("RCPT TO: <" + mail.ReceiverAddress + ">\n").getBytes());
 					message = SIReader.readLine();
 					if(MessageCode(message) == OK){
-						String MessageToSend = prepareMessage(mail.message);
+						String MessageToSend = prepareMessage(mail.getMessage());
 						ClientOut.write(("DATA\n").getBytes());
 						message = SIReader.readLine();
 						if (MessageCode(message) == DATA){
@@ -125,7 +125,6 @@ public class MailSender {
 		}
 		else{
 			int rows = (int) Math.ceil(message.length()/998);
-			System.out.print("No of Rows: " + rows);
 			for(int i = 0; i <= rows; i++){
 				try{
 				preparedString += message.substring(i*998, (i+1)*998);
