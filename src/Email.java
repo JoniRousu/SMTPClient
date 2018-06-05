@@ -16,10 +16,11 @@ public class Email {
 	private String message;
 	public String Subject;
 	public String header;
-	private String attachment;
-	private String attachmentType;
-	private String attachmentName;
+	private String[] attachment;
+	private String[] attachmentType;
+	private String[] attachmentName;
 	private String boundary;
+	private int NrOfAttachments;
 	
 	Email(){
 		setSenderAddress("");
@@ -30,9 +31,15 @@ public class Email {
 		message = "";
 		boundary = "";
 		header = "";
-		attachment = "";
-		attachmentType = "";
-		attachmentName = "";
+		attachment = new String[10];
+		attachmentType = new String[10];
+		attachmentName = new String[10];
+		for (int i = 0; i < 10; i++){
+			attachment[i] = "";
+			attachmentType[i] = "";
+			attachmentName[i] = "";
+		}
+		NrOfAttachments = 0;
 	}
 	
 	
@@ -49,33 +56,35 @@ public class Email {
 
 	public void setMessage(String Message){
 		message = Base64.getMimeEncoder(72, "\r\n".getBytes()).encodeToString(Message.getBytes());
-		if (!attachment.isEmpty()){
-			message += "\n\n--" + boundary + "\n";
-			message += "Content Type: " + attachmentType + ";\n name =\"" + attachmentName + "\"\n";
-			message += "Content-Transfer-Encoding: base64\n";
-			message += "Content-Disposition: attachment;\n filename=\"" + attachmentName + "\"\n\n";
-			message += attachment + "\n";
+		if(!attachment[0].isEmpty()){
+			for (int i = 0; i< NrOfAttachments; i++){
+				message += "\n\n--" + boundary + "\n";
+				message += "Content-Type: " + attachmentType[i] + ";\n name =\"" + attachmentName[i] + "\"\n";
+				message += "Content-Transfer-Encoding: base64\n";
+				message += "Content-Disposition: attachment;\n filename=\"" + attachmentName[i] + "\"\n\n";
+				message += attachment[i];
+			}
 		}
-		message += "--" + boundary + "--";
+		message += "\n--" + boundary + "--";
 	}
 	
 	public String getMessage(){
 		return message;
 	}
 	
-	
-	public String getAttachment() {
-		return attachment;
-	}
-
-
 	public void setAttachment(String pathToAttachment) throws IOException, URISyntaxException {
 		File Attachment = new File(pathToAttachment);
-		attachmentType = Files.probeContentType(Paths.get(new URI("file:///" + pathToAttachment)));
-		attachmentName = Attachment.getName();
-		if (attachment.isEmpty()){
-			attachment = Base64.getMimeEncoder(72, "\r\n".getBytes()).encodeToString(Files.readAllBytes(Paths.get(new URI("file:///" + pathToAttachment))));
+		if (!Attachment.exists()){
+			System.out.println("The file you want to attach was not found!");
+			System.exit(1);
 		}
+		attachmentType[NrOfAttachments] = Files.probeContentType(Paths.get(new URI("file:///" + pathToAttachment)));
+		if (attachmentType[NrOfAttachments] == null){
+			attachmentType[NrOfAttachments] = "application/octet-stream";
+		}
+		attachmentName[NrOfAttachments] = Attachment.getName();
+		attachment[NrOfAttachments] = Base64.getMimeEncoder(72, "\r\n".getBytes()).encodeToString(Files.readAllBytes(Paths.get(new URI("file:///" + pathToAttachment))));
+		NrOfAttachments++;
 	}
 
 	public String getHeader(){
