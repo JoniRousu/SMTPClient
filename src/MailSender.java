@@ -31,7 +31,7 @@ public class MailSender {
 			SIReader = new BufferedReader(new InputStreamReader(ServerIncoming));
 			String messageIn = SIReader.readLine();
 			if(MessageCode(messageIn) == WELCOME){
-				ClientOut.write(("HELO " + User + "\n").getBytes());
+				ClientOut.write(("HELO " + User.replaceAll(" ", "") + "\n").getBytes());
 				messageIn = SIReader.readLine();
 				if(MessageCode(messageIn) == OK){
 					return true;
